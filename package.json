@@ -7,7 +7,9 @@
     "keygen": "npx ts-node ./keygen.ts",
     "airdrop": "npx ts-node ./airdrop.ts",
     "transfer": "npx ts-node ./transfer.ts",
-    "enroll": "npx ts-node ./enroll.ts"
+    "enroll": "npx ts-node ./enroll.ts",
+    "base58": "npx ts-node  ./helpers/base58ToWallet.ts",
+    "wallet": "npx ts-node  ./helpers/walletToBase58.ts"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.30.1",
