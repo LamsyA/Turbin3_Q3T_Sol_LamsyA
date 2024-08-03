@@ -3,5 +3,7 @@ node_modules
 *node_modules
 
 # Added by cargo
-*/target
+*target
 *wallet.json
+.DS_Store
+*debug
