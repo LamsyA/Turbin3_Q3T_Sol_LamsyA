@@ -10,10 +10,10 @@
 
 # Content
 
-[Week 0](./week0)
+[Week 0](./cli_tool)
 
-- [Rust Registration](./week0/Turbin3_Prereq_rs/)
-- [Typescript Registration](./week0/Turbin3_Prereq_ts/)
+- [Rust tool](./cli_tool/Turbin3_Prereq_rust/)
+- [Typescript tool](./cli_tool/Turbin3_Prereq_typescript/)
 
 This project is both typescript and Rust-based CLI tool and test suite designed to interact with a Solana program using an Anchor IDL. It provides functionalities such as:
 
