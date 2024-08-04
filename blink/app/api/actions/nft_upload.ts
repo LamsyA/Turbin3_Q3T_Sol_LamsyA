@@ -5,7 +5,7 @@ import {
   signerIdentity,
 } from "@metaplex-foundation/umi";
 import { irysUploader } from "@metaplex-foundation/umi-uploader-irys";
-import { getRandomImageUrl } from "./route";
+
 import { getWallet } from "./wallet";
 import { readFile } from "fs/promises";
 import path from "path";
@@ -18,11 +18,27 @@ const signer = createSignerFromKeypair(umi, keypair);
 umi.use(irysUploader());
 umi.use(signerIdentity(signer));
 
+export const generateRandImgUrl = () => {
+  const images = [
+    "solana1.jpeg",
+    "solana2.jpeg",
+    "solana3.jpeg",
+    "solana4.jpeg",
+    "solana5.jpeg",
+    "solana6.jpeg",
+    "solana7.jpeg",
+    "solana8.jpeg",
+    "solana9.jpeg",
+    "solana10.jpeg",
+  ];
+  const randomIndex = Math.floor(Math.random() * images.length);
+  return images[randomIndex];
+};
 export const nftUpload = async () => {
   try {
     //1. Load image
 
-    const getImage = getRandomImageUrl();
+    const getImage = generateRandImgUrl();
     //2. Convert image to generic file.
     const imageFile = await readFile(
       path.join(process.cwd(), "public", getImage)

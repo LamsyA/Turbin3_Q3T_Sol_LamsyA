@@ -9,24 +9,7 @@ import { PublicKey, clusterApiUrl, Connection } from "@solana/web3.js";
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import { nftUpload } from "./nft_upload";
 import { uploadMetadata } from "./nft_metadata";
-import { nftMint } from "./mft_mint";
-
-export const getRandomImageUrl = () => {
-  const images = [
-    "solana1.jpeg",
-    "solana2.jpeg",
-    "solana3.jpeg",
-    "solana4.jpeg",
-    "solana5.jpeg",
-    "solana6.jpeg",
-    "solana7.jpeg",
-    "solana8.jpeg",
-    "solana9.jpeg",
-    "solana10.jpeg",
-  ];
-  const randomIndex = Math.floor(Math.random() * images.length);
-  return images[randomIndex];
-};
+import { nftMint } from "./nft_mint";
 
 export const GET = (req: Request) => {
   const payload: ActionGetResponse = {
