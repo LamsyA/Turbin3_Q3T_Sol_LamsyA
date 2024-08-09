@@ -56,15 +56,33 @@ impl <'info> Refund<'info> {
             self.token_program.to_account_info(), accounts, &signer_seeds);
          transfer_checked(ctx, self.escrow.receive, self.mint_a.decimals)?;
          
-         let accounts = CloseAccount {
-             account: self.vault.to_account_info(),
-             destination: self.maker.to_account_info(),
-             authority: self.escrow.to_account_info(),
-    };
+    //      let accounts = CloseAccount {
+    //          account: self.vault.to_account_info(),
+    //          destination: self.maker.to_account_info(),
+    //          authority: self.escrow.to_account_info(),
+    // };
 
-    let ctx = CpiContext::new_with_signer(
-        self.token_program.to_account_info(), accounts, &signer_seeds);
-    close_account(ctx)?;
+    // let ctx = CpiContext::new_with_signer(
+    //     self.token_program.to_account_info(), accounts, &signer_seeds);
+    // close_account(ctx)?;
     Ok(())
+    }
+
+    pub fn close(&mut self) -> Result<()> {
+        let signer_seeds: [&[&[u8]]; 1] = [&[
+            b"escrow",
+            self.maker.to_account_info().key.as_ref(),
+            &self.escrow.seed.to_le_bytes()[..],
+            &[self.escrow.bump],
+        ]];
+        let accounts = CloseAccount {
+            account: self.vault.to_account_info(),
+            destination: self.maker.to_account_info(),
+            authority: self.escrow.to_account_info(),
+        };
+        let ctx = CpiContext::new_with_signer(
+            self.system_program.to_account_info(), accounts, &signer_seeds);
+        close_account(ctx)?;
+        Ok(())
     }
 }
