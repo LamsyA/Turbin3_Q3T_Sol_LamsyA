@@ -225,67 +225,67 @@ describe("escrow", () => {
     );
   });
 
-  // it("it should refund the maker", async () => {
-  //   try {
-  //     console.log(`\n ---------------------------------------\n
-  //                        \n ✅ Escrow testing  Refund starts here
-  //                \n ---------------------------------------\n`);
+  xit("it should refund the maker", async () => {
+    try {
+      console.log(`\n ---------------------------------------\n
+                         \n ✅ Escrow testing  Refund starts here
+                 \n ---------------------------------------\n`);
 
-  //     // get maker token balance
-  //     const makerTokenABalance = await connection.getTokenAccountBalance(
-  //       makerAtaA
-  //     );
-  //     console.log(
-  //       `\n ✅ Maker Token A Balance before refund: ${makerTokenABalance.value.amount}`
-  //     );
-  //     const escrow = PublicKey.findProgramAddressSync(
-  //       [
-  //         Buffer.from("escrow"),
-  //         maker.publicKey.toBuffer(),
-  //         seed.toArrayLike(Buffer, "le", 8),
-  //       ],
-  //       program.programId
-  //     )[0];
-  //     const vault = getAssociatedTokenAddressSync(mintA, escrow, true);
+      // get maker token balance
+      const makerTokenABalance = await connection.getTokenAccountBalance(
+        makerAtaA
+      );
+      console.log(
+        `\n ✅ Maker Token A Balance before refund: ${makerTokenABalance.value.amount}`
+      );
+      const escrow = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("escrow"),
+          maker.publicKey.toBuffer(),
+          seed.toArrayLike(Buffer, "le", 8),
+        ],
+        program.programId
+      )[0];
+      const vault = getAssociatedTokenAddressSync(mintA, escrow, true);
 
-  //     const accounts = {
-  //       maker: maker.publicKey,
-  //       taker: taker.publicKey,
-  //       mintA: mintA,
-  //       mintB: mintB,
-  //       makerAtaA: makerAtaA,
-  //       takerAtaA: takerAtaA,
-  //       makerAtaB: makerAtaB,
-  //       takerAtaB: takerAtaB,
-  //       escrow,
-  //       vault,
-  //       tokenProgram: TOKEN_PROGRAM_ID,
-  //     };
-  //     const tx = await program.methods
-  //       .refund()
-  //       .accounts(accounts)
-  //       .signers([maker])
-  //       .rpc()
-  //       .then(confirm)
-  //       .then(msg);
-  //     console.log("Your transaction signature", tx);
-  //   } catch (err) {
-  //     if (err instanceof anchor.web3.SendTransactionError) {
-  //       console.error("Transaction failed with logs:", err.logs);
-  //     } else {
-  //       console.error("An error occurred:", err);
-  //     }
-  //     throw err;
-  //   }
+      const accounts = {
+        maker: maker.publicKey,
+        taker: taker.publicKey,
+        mintA: mintA,
+        mintB: mintB,
+        makerAtaA: makerAtaA,
+        takerAtaA: takerAtaA,
+        makerAtaB: makerAtaB,
+        takerAtaB: takerAtaB,
+        escrow,
+        vault,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      };
+      const tx = await program.methods
+        .refund()
+        .accounts(accounts)
+        .signers([maker])
+        .rpc()
+        .then(confirm)
+        .then(msg);
+      console.log("Your transaction signature", tx);
+    } catch (err) {
+      if (err instanceof anchor.web3.SendTransactionError) {
+        console.error("Transaction failed with logs:", err.logs);
+      } else {
+        console.error("An error occurred:", err);
+      }
+      throw err;
+    }
 
-  //   // check token a balance
-  //   const makerTokenABalance = await connection.getTokenAccountBalance(
-  //     makerAtaA
-  //   );
-  //   console.log(
-  //     `\n ✅ Maker Token A Balance after refund: ${makerTokenABalance.value.amount}`
-  //   );
-  // });
+    // check token a balance
+    const makerTokenABalance = await connection.getTokenAccountBalance(
+      makerAtaA
+    );
+    console.log(
+      `\n ✅ Maker Token A Balance after refund: ${makerTokenABalance.value.amount}`
+    );
+  });
 
   it("should Take the escrow!", async () => {
     console.log(`\n -----------------------------------------------------------------------\n
