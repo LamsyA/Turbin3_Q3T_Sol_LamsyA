@@ -34,3 +34,34 @@ This project is both typescript and Rust-based CLI tool and test suite designed 
   - [token image creation and uploading](./spl_token_and%20_nft/cluster1/nft_image.ts)
   - [token Metadata](./spl_token_and%20_nft/cluster1/nft_metadata.ts)
   - [token Miniting](./spl_token_and%20_nft/cluster1/nft_mint.ts)
+
+[Week 2](./vault-program/)
+
+- Vault Program
+
+  - [Vault Program](./vault-program/programs/vault-program/src/lib.rs)
+  - [vault Test](./vault-program/tests/vault-program.ts)
+
+  #### Escrow Program
+
+  This program is an escrow program that allows users to transfer token from one account to another.
+  we have the maker and the taker.
+
+  - The maker:
+    - deposits token a certain amount of TokenA into the escrow account, the deposited token is send to the vault in the escrow account, and then specified the amount of tokenB to be received.
+  - The taker:
+    - the taker transfers the specified amount of tokenB to the maker.
+    - the taker will receive the deposited tokenA from the vault in the escrow account.
+    - if the maker does not have the ATA for the tokenB , it is automatically created. likewise, if the taker does not have the ATA for the tokenA, it is automatically created.
+  - Refund:
+    - Incase, the maker does not want to swap their token before a taker accepts, the maker can request for refund from the vault and the program will return the token to the maker and then close the vault account.
+
+  Below is the implementation of the program.
+
+  - [Escrow Program](./escrow/programs/escrow/src/lib.rs)
+  - [Escrow Test](./escrow/tests/escrow.ts)
+  - [Escrow Maker](./escrow/programs/escrow/src/contexts/make.rs)
+  - [Escrow Taker](./escrow/programs/escrow/src/contexts/take.rs)
+  - [Escrow Redund](./escrow/programs/escrow/src/contexts/refund.rs)
+
+- [week 3](./#/)
