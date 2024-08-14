@@ -32,6 +32,3 @@ pub mod nft_staking {
         ctx.accounts.stake(&ctx.bumps)
     }
 }
-
-#[derive(Accounts)]
-pub struct Initialize {}

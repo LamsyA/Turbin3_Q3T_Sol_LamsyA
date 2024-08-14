@@ -9,7 +9,6 @@ pub struct Stake<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
 
-    #[account()]
     pub mint: Account<'info, Mint>,
     pub collection: Account<'info, Mint>,
     #[account(
