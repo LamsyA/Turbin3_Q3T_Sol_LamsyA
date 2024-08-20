@@ -6,7 +6,7 @@ import {
   findMasterEditionPda,
   findMetadataPda,
   mplTokenMetadata,
-  verifyCollection,
+  // verifyCollection,
   verifySizedCollectionItem,
 } from "@metaplex-foundation/mpl-token-metadata";
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
