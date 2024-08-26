@@ -102,7 +102,7 @@ impl<'info> List<'info> {
         };
 
         let cpi_ctx = CpiContext::new(self.token_program.to_account_info(), account);
-        transfer_checked(cpi_ctx, 1, self.maker_mint.decimals);
+        transfer_checked(cpi_ctx, 1, self.maker_mint.decimals)?;
         Ok(())
     }
 }
