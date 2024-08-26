@@ -14,7 +14,10 @@ pub use state::*;
 pub mod nft_marketplace {
     use super::*;
 
-    pub fn initialize(ctx: Context<Initialize>, fee: u16, name: String) -> Result<()> {
+    pub fn initialize(ctx: Context<Initialize>, name: String, fee: u16) -> Result<()> {
         ctx.accounts.init(name, fee, &ctx.bumps)
+    }
+    pub fn delist(ctx: Context<Delist>) -> Result<()> {
+        ctx.accounts.withdraw()
     }
 }
