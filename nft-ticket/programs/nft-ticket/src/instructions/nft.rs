@@ -1,11 +1,11 @@
-use anchor_lang::{prelude::*, system_program};
+use anchor_lang::prelude::*;
 
 // use anchor_spl::{associated_token, token};
 
 use anchor_spl::{
     associated_token::AssociatedToken,
     metadata::Metadata,
-    token::{self, Mint, Token, TokenAccount},
+    token::{Mint, Token, TokenAccount},
 };
 use mpl_token_metadata::accounts::{MasterEdition, Metadata as MetadataAccount};
 // use mpl_token_metadata::{instructions as token_instruction, ID as TOKEN_METADATA_ID};
@@ -20,7 +20,7 @@ pub struct CreateNft<'info> {
     #[account(
         init,
         payer = signer,
-        mint::decimals = 6,
+        mint::decimals = 0,
         mint::authority = signer.key(),
         mint::freeze_authority = signer.key()
     )]
@@ -32,15 +32,14 @@ pub struct CreateNft<'info> {
         associated_token::authority = signer
     )]
     pub associated_token_account: Account<'info, TokenAccount>,
-    pub collection: Account<'info, Mint>,
-
-    // CHECK: Metaplex will check this
+    // pub collection: Account<'info, Mint>,
+    /// CHECK: Metaplex will check this
     #[account(
         mut,
         address = MetadataAccount::find_pda(&mint.key()).0,
     )]
     pub metadata_account: AccountInfo<'info>,
-    // CHECK: Metaplex will check this
+    /// CHECK: Metaplex will check this
     #[account(
         mut,
         address = MasterEdition::find_pda(&mint.key()).0,
@@ -54,11 +53,11 @@ pub struct CreateNft<'info> {
     pub rent: Sysvar<'info, Rent>,
 }
 
-impl<'info> CreateNft<'info> {
-    pub fn create_nft(&mut self) -> Result<()> {
-        Ok(())
-    }
-}
+// impl<'info> CreateNft<'info> {
+//     pub fn create_nft(&mut self) -> Result<()> {
+//         Ok(())
+//     }
+// }
 
 // #[derive(Accounts)]
 // pub struct CreateNft<'info> {
