@@ -18,7 +18,7 @@ pub mod nft_ticket {
         event_name: String,
         ticket_price: u16,
         date: i64,
-        max_supply: u16,
+        max_supply: u64,
         description: String,
     ) -> Result<()> {
         msg!("Greetings from: {:?}", ctx.program_id);
@@ -30,5 +30,13 @@ pub mod nft_ticket {
             description,
             &ctx.bumps,
         )
+    }
+    pub fn create_nft(
+        ctx: Context<CreateNft>,
+        name: String,
+        symbol: String,
+        uri: String,
+    ) -> Result<()> {
+        ctx.accounts.create_nft(name, symbol, uri)
     }
 }
