@@ -8,10 +8,11 @@ use crate::{error::CustomError, state::{event, Ticket}};
 
 #[derive(Accounts)]
 #[instruction(event_name: String)]
-pub struct PurchaseTicket<'info> {
+pub struct Purchase<'info> {
     #[account(mut)]
     pub taker: Signer<'info>,
     pub organizer: Signer<'info>,
+    
 
     #[account(
         init,
@@ -40,8 +41,8 @@ pub struct PurchaseTicket<'info> {
     pub system_program: Program<'info, System>,
 }
 
-impl <'info> PurchaseTicket<'info> {
-    pub fn purchase_ticket(&mut self, event_name: String, bumps: &PurchaseTicketBumps) -> Result<()> {
+impl <'info> Purchase<'info> {
+    pub fn purchase_ticket(&mut self, event_name: String, bumps: &PurchaseBumps) -> Result<()> {
         // get event
 
         if self.event.event_name != event_name  {

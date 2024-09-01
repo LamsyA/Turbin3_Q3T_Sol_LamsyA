@@ -39,4 +39,8 @@ pub mod nft_ticket {
     ) -> Result<()> {
         ctx.accounts.create_nft(name, symbol, uri)
     }
+
+    pub fn purchase_ticket(ctx: Context<Purchase>, event_name: String) -> Result<()> {
+        ctx.accounts.purchase_ticket(event_name, &ctx.bumps)
+    }
 }

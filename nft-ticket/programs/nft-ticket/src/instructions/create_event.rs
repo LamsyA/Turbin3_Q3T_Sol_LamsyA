@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 
 use crate::error::CustomError;
 use crate::state::Event;
-use crate::Ticket;
+// use crate::Ticket;
 
 #[derive(Accounts)]
 #[instruction(event_name: String)]
@@ -18,7 +18,7 @@ pub struct CreateEvent<'info> {
         bump,
     )]
     pub event: Account<'info, Event>,
-    pub ticket: Account<'info, Ticket>,
+    // pub ticket: Account<'info, Ticket>,
     pub system_program: Program<'info, System>,
 }
 
@@ -43,7 +43,7 @@ impl<'info> CreateEvent<'info> {
             description,
         });
 
-        self.ticket.event = self.event.event_name.clone();
+        // self.ticket.event = self.event.event_name.clone();
 
         Ok(())
     }
