@@ -48,8 +48,8 @@ pub struct CreateNft<'info> {
     #[account(mut)]
     pub vault: Signer<'info>,
 
-    #[account(mut)]
-    pub event_creator: Signer<'info>,
+    // #[account(mut)]
+    // pub event_creator: Signer<'info>,
 
     // pub collection: Account<'info, Mint>,
     /// CHECK: Metaplex will check this
@@ -109,7 +109,7 @@ impl<'info> CreateNft<'info> {
                 mint: self.mint.to_account_info(),
                 mint_authority: self.vault.to_account_info(),
                 payer: self.signer.to_account_info(),
-                update_authority: self.event_creator.to_account_info(),
+                update_authority: self.signer.to_account_info(),
                 system_program: self.system_program.to_account_info(),
                 rent: self.rent.to_account_info(),
             },
@@ -121,7 +121,7 @@ impl<'info> CreateNft<'info> {
             uri,
             seller_fee_basis_points: 0,
             creators: Some(vec![Creator {
-                address: self.event_creator.key(),
+                address: self.signer.key(),
                 verified: false,
                 share: 100,
             }]),
@@ -139,7 +139,7 @@ impl<'info> CreateNft<'info> {
                 mint: self.mint.to_account_info(),
                 mint_authority: self.vault.to_account_info(),
                 payer: self.signer.to_account_info(),
-                update_authority: self.event_creator.to_account_info(),
+                update_authority: self.signer.to_account_info(),
                 system_program: self.system_program.to_account_info(),
                 token_program: self.token_program.to_account_info(),
                 rent: self.rent.to_account_info(),
@@ -155,115 +155,115 @@ impl<'info> CreateNft<'info> {
         Ok(())
     }
 
-    pub fn mint_nft_to_user(&mut self, user: AccountInfo<'info>) -> Result<()> {
-        msg!("Checking Max Supply...");
+    // pub fn mint_nft_to_user(&mut self, user: AccountInfo<'info>) -> Result<()> {
+    //     msg!("Checking Max Supply...");
 
-        let vault_balance = self.vault_ata.amount;
+    //     let vault_balance = self.vault_ata.amount;
 
-        require!(vault_balance > 0, CustomError::MaxSupplyExceeded);
+    //     require!(vault_balance > 0, CustomError::MaxSupplyExceeded);
 
-        msg!("Checking User Ownership...");
+    //     msg!("Checking User Ownership...");
 
-        let user_ata = get_associated_token_address(&user.key(), &self.mint.key());
-        require!(
-            self.token_program.exit(&user_ata).is_ok(),
-            CustomError::UserAlreadyOwnsNft
-        );
+    //     let user_ata = get_associated_token_address(&user.key(), &self.mint.key());
+    //     require!(
+    //         self.token_program.exit(&user_ata).is_ok(),
+    //         CustomError::UserAlreadyOwnsNft
+    //     );
 
-        msg!("Charging User...");
+    //     msg!("Charging User...");
 
-        let transfer_accounts = Transfer {
-            from: user.to_account_info(),
-            to: self.event_creator.to_account_info(),
-            authority: user.clone(),
-        };
+    //     let transfer_accounts = Transfer {
+    //         from: user.to_account_info(),
+    //         to: self.signer.to_account_info(),
+    //         authority: user.clone(),
+    //     };
 
-        let cpi_context = CpiContext::new(self.token_program.to_account_info(), transfer_accounts);
-        transfer(cpi_context, self.event.ticket_price.into())?;
+    //     let cpi_context = CpiContext::new(self.token_program.to_account_info(), transfer_accounts);
+    //     transfer(cpi_context, self.event.ticket_price.into())?;
 
-        msg!("Transferring NFT from Vault to User...");
+    //     msg!("Transferring NFT from Vault to User...");
 
-        let transfer_accounts = Transfer {
-            from: self.vault_ata.to_account_info(),
-            to: user,
-            authority: self.vault.to_account_info(),
-        };
+    //     let transfer_accounts = Transfer {
+    //         from: self.vault_ata.to_account_info(),
+    //         to: user,
+    //         authority: self.vault.to_account_info(),
+    //     };
 
-        let cpi_context = CpiContext::new(self.token_program.to_account_info(), transfer_accounts);
-        transfer(cpi_context, 1)?;
+    //     let cpi_context = CpiContext::new(self.token_program.to_account_info(), transfer_accounts);
+    //     transfer(cpi_context, 1)?;
 
-        msg!("Transfer Successful.");
-        Ok(())
-    }
-    pub fn mint_edition(&mut self, edition_number: u64) -> Result<()> {
-        msg!("Minting Edition...");
-        let new_mint = self.mint.to_account_info();
-        let new_metadata = self.metadata_account.to_account_info();
-        let new_edition = self.master_edition_account.to_account_info();
+    //     msg!("Transfer Successful.");
+    //     Ok(())
+    // }
+    // pub fn mint_edition(&mut self, edition_number: u64) -> Result<()> {
+    //     msg!("Minting Edition...");
+    //     let new_mint = self.mint.to_account_info();
+    //     let new_metadata = self.metadata_account.to_account_info();
+    //     let new_edition = self.master_edition_account.to_account_info();
 
-        let cpi_context = CpiContext::new(
-            self.token_metadata_program.to_account_info(),
-            MintNewEditionFromMasterEditionViaToken {
-                new_metadata,
-                new_edition,
-                master_edition: self.master_edition_account.to_account_info(),
-                new_mint,
-                edition_mark_pda: self.master_edition_account.to_account_info(),
-                // mint_authority: self.vault.to_account_info(),
-                payer: self.signer.to_account_info(),
-                token_account_owner: self.vault.to_account_info(),
-                token_account: self.vault_ata.to_account_info(),
-                system_program: self.system_program.to_account_info(),
-                rent: self.rent.to_account_info(),
-                new_mint_authority: self.vault.to_account_info(),
-                new_metadata_update_authority: self.vault.to_account_info(),
-                metadata: self.metadata_account.to_account_info(),
-                token_program: self.token_program.to_account_info(),
-                metadata_mint: self.mint.to_account_info(),
-            },
-        );
+    //     let cpi_context = CpiContext::new(
+    //         self.token_metadata_program.to_account_info(),
+    //         MintNewEditionFromMasterEditionViaToken {
+    //             new_metadata,
+    //             new_edition,
+    //             master_edition: self.master_edition_account.to_account_info(),
+    //             new_mint,
+    //             edition_mark_pda: self.master_edition_account.to_account_info(),
+    //             // mint_authority: self.vault.to_account_info(),
+    //             payer: self.signer.to_account_info(),
+    //             token_account_owner: self.vault.to_account_info(),
+    //             token_account: self.vault_ata.to_account_info(),
+    //             system_program: self.system_program.to_account_info(),
+    //             rent: self.rent.to_account_info(),
+    //             new_mint_authority: self.vault.to_account_info(),
+    //             new_metadata_update_authority: self.vault.to_account_info(),
+    //             metadata: self.metadata_account.to_account_info(),
+    //             token_program: self.token_program.to_account_info(),
+    //             metadata_mint: self.mint.to_account_info(),
+    //         },
+    //     );
 
-        mint_new_edition_from_master_edition_via_token(cpi_context, edition_number)?;
+    //     mint_new_edition_from_master_edition_via_token(cpi_context, edition_number)?;
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
-    pub fn create_collection_nft(
-        &mut self,
-        name: String,
-        symbol: String,
-        uri: String,
-    ) -> Result<()> {
-        msg!("Creating Collection NFT...");
+    // pub fn create_collection_nft(
+    //     &mut self,
+    //     name: String,
+    //     symbol: String,
+    //     uri: String,
+    // ) -> Result<()> {
+    //     msg!("Creating Collection NFT...");
 
-        let collection = Collection {
-            key: self.master_edition_account.key(),
-            verified: false,
-        };
+    //     let collection = Collection {
+    //         key: self.master_edition_account.key(),
+    //         verified: false,
+    //     };
 
-        let cpi_context = CpiContext::new(
-            self.token_metadata_program.to_account_info(),
-            CreateMetadataAccountsV3 {
-                metadata: self.metadata_account.to_account_info(),
-                mint: self.mint.to_account_info(),
-                mint_authority: self.vault.to_account_info(),
-                payer: self.signer.to_account_info(),
-                update_authority: self.event_creator.to_account_info(),
-                system_program: self.system_program.to_account_info(),
-                rent: self.rent.to_account_info(),
-            },
-        );
-        let data_v2 = DataV2 {
-            name,
-            symbol,
-            uri,
-            seller_fee_basis_points: 0,
-            creators: None,
-            collection: Some(collection),
-            uses: None,
-        };
-        create_metadata_accounts_v3(cpi_context, data_v2, false, true, None)?;
+    //     let cpi_context = CpiContext::new(
+    //         self.token_metadata_program.to_account_info(),
+    //         CreateMetadataAccountsV3 {
+    //             metadata: self.metadata_account.to_account_info(),
+    //             mint: self.mint.to_account_info(),
+    //             mint_authority: self.vault.to_account_info(),
+    //             payer: self.signer.to_account_info(),
+    //             update_authority: self.signer.to_account_info(),
+    //             system_program: self.system_program.to_account_info(),
+    //             rent: self.rent.to_account_info(),
+    //         },
+    //     );
+    //     let data_v2 = DataV2 {
+    //         name,
+    //         symbol,
+    //         uri,
+    //         seller_fee_basis_points: 0,
+    //         creators: None,
+    //         collection: Some(collection),
+    //         uses: None,
+    //     };
+    //     create_metadata_accounts_v3(cpi_context, data_v2, false, true, None)?;
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 }

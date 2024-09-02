@@ -6,27 +6,18 @@ import base58 from "bs58";
 import { assert } from "chai";
 import { faker, faker as fk } from "@faker-js/faker";
 import {
-  createNft,
   findMasterEditionPda,
   findMetadataPda,
-  MPL_TOKEN_METADATA_PROGRAM_ID,
   mplTokenMetadata,
 } from "@metaplex-foundation/mpl-token-metadata";
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import { walletAdapterIdentity } from "@metaplex-foundation/umi-signer-wallet-adapters";
-import {
-  createSignerFromKeypair,
-  generateSigner,
-  percentAmount,
-  publicKey,
-  signerIdentity,
-} from "@metaplex-foundation/umi";
+import { publicKey } from "@metaplex-foundation/umi";
 import {
   TOKEN_PROGRAM_ID,
   ASSOCIATED_TOKEN_PROGRAM_ID,
   getAssociatedTokenAddress,
 } from "@solana/spl-token";
-import { BN } from "bn.js";
 
 describe("nft-ticket", async () => {
   // Configure the client to use the local cluster.
@@ -102,24 +93,11 @@ describe("nft-ticket", async () => {
 
     console.log("Event PDA:", eventPda.toBase58());
     console.log("Ticket PDA:", ticketPda.toBase58());
-    // console.log("Ticket Bump:", ticketBump);
 
-    // await program.rpc.initializeTicket(ticketBump, {
-    //   accounts: {
-    //     ticket: ticketPda,
-    //     organizer: organizerWallet.publicKey,
-    //     event: eventPda,
-    //     systemProgram: web3.SystemProgram.programId,
-    //   },
-    //   signers: [organizerWallet],
-    // });
     const tx = await program.methods
       .createEvent(eventName, ticketPrice, date, maxSupply, description)
       .accounts({
         organizer: organizerWallet.publicKey,
-        // ticket: ticketPda,
-        // event: eventPda,
-        // systemProgram: web3.SystemProgram.programId,
       })
       .signers([organizerWallet])
       .rpc();
@@ -215,6 +193,9 @@ describe("nft-ticket", async () => {
         LAMPORTS_PER_SOL
       )
     );
+    const vaultAtaDataBeforeMintingNFT =
+      await program.provider.connection.getAccountInfo(vault_ata);
+    assert.isNull(vaultAtaDataBeforeMintingNFT);
 
     const TOKEN_METADATA_ONCHAIN_ID =
       "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s";
@@ -226,9 +207,7 @@ describe("nft-ticket", async () => {
         vault: vault.publicKey,
         vaultAta: vault_ata,
         mint: mint.publicKey,
-        eventCreator: organizerWallet.publicKey,
         event: eventPda,
-        // mintAta: mint_ata,
         metadataAccount: metadataAccount,
         masterEditionAccount: masterEditionAccount,
         tokenMetadataProgram: TOKEN_METADATA_ONCHAIN_ID,
@@ -246,34 +225,14 @@ describe("nft-ticket", async () => {
       await provider.connection.getSignatureStatus(txid)
     );
 
-    // Mint editions
-    // for (let i = 1; i <= maxSupply; i++) {
-    //   const editionTxid = await program.methods
-    //     .mintEdition(new BN(i))
-    //     .accounts({
-    //       // signer: organizerWallet.publicKey,
-    //       // vault: vault.publicKey,
-    //       // vaultAta: vault_ata,
-    //       mint: mint.publicKey,
-    //       // eventCreator: organizerWallet.publicKey,
-    //       event: eventPda,
-    //       metadataAccount: metadataAccount,
-    //       masterEditionAccount: masterEditionAccount,
-    //       // tokenMetadataProgram: TOKEN_METADATA_ONCHAIN_ID,
-    //       // tokenProgram: TOKEN_PROGRAM_ID,
-    //       // associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-    //       // systemProgram: web3.SystemProgram.programId,
-    //       // rent: web3.SYSVAR_RENT_PUBKEY,
-    //       ticket: ticketPda,
-    //     })
-    //     .signers([mint, vault])
-    //     .rpc();
+    const eventData = await program.account.ticket.fetch(ticketPda);
+    console.log("\n Event data context:", eventData);
 
-    //   console.log(
-    //     `✅ Edition ${i} minted successfully: `,
-    //     await provider.connection.getSignatureStatus(editionTxid)
-    //   );
-    // }
+    // Verify the NFT exists by fetching its metadata
+    const nftMetadata = await program.provider.connection.getAccountInfo(
+      new web3.PublicKey(metadataAccount.toString())
+    );
+    console.log("NFT metadata: utf-8 ", nftMetadata.data.toString("utf-8"));
   });
 });
 function airdropSol(publicKey: anchor.web3.PublicKey) {
