@@ -18,7 +18,7 @@ pub mod nft_ticket {
         event_name: String,
         ticket_price: u16,
         date: i64,
-        max_supply: u64,
+        max_supply: u16,
         description: String,
     ) -> Result<()> {
         msg!("Greetings from: {:?}", ctx.program_id);
@@ -37,9 +37,22 @@ pub mod nft_ticket {
         symbol: String,
         uri: String,
     ) -> Result<()> {
+        ctx.accounts.mint_nft()?;
         ctx.accounts.create_nft(name, symbol, uri)
     }
 
+    pub fn mint_edition(ctx: Context<CreateNft>, edition_number: u64) -> Result<()> {
+        ctx.accounts.mint_edition(edition_number)
+    }
+
+    pub fn create_collection_nft(
+        ctx: Context<CreateNft>,
+        name: String,
+        symbol: String,
+        uri: String,
+    ) -> Result<()> {
+        ctx.accounts.create_collection_nft(name, symbol, uri)
+    }
     pub fn purchase_ticket(ctx: Context<Purchase>, event_name: String) -> Result<()> {
         ctx.accounts.purchase_ticket(event_name, &ctx.bumps)
     }

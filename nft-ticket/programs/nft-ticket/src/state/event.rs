@@ -4,7 +4,7 @@ use anchor_lang::prelude::*;
 pub struct Event {
     pub organizer: Pubkey,
     pub ticket_price: u16,
-    pub max_supply: u64,
+    pub max_supply: u16,
     pub bump: u8,
     pub date: i64,
     pub event_name: String,

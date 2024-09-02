@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 
 use crate::error::CustomError;
 use crate::state::Event;
-// use crate::Ticket;
+use crate::Ticket;
 
 #[derive(Accounts)]
 #[instruction(event_name: String)]
@@ -18,7 +18,15 @@ pub struct CreateEvent<'info> {
         bump,
     )]
     pub event: Account<'info, Event>,
-    // pub ticket: Account<'info, Ticket>,
+    #[account(
+        init,
+        payer = organizer,
+        space = Ticket::INIT_SPACE,
+         seeds = [b"ticket", event.key().as_ref()],
+          bump
+        )]
+    pub ticket: Account<'info, Ticket>,
+
     pub system_program: Program<'info, System>,
 }
 
@@ -28,11 +36,16 @@ impl<'info> CreateEvent<'info> {
         event_name: String,
         ticket_price: u16,
         date: i64,
-        max_supply: u64,
+        max_supply: u16,
         description: String,
         bumps: &CreateEventBumps,
     ) -> Result<()> {
         require!(max_supply > 0, CustomError::InvalidMaxSupply);
+
+        let ticket = &mut self.ticket;
+        ticket.bump = bumps.ticket;
+        ticket.event = self.event.event_name.clone();
+
         self.event.set_inner(Event {
             organizer: self.organizer.key(),
             ticket_price,
@@ -43,7 +56,7 @@ impl<'info> CreateEvent<'info> {
             description,
         });
 
-        // self.ticket.event = self.event.event_name.clone();
+        self.ticket.event = self.event.event_name.clone();
 
         Ok(())
     }
