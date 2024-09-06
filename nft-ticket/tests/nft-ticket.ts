@@ -8,6 +8,7 @@ import { faker, faker as fk } from "@faker-js/faker";
 import {
   findMasterEditionPda,
   findMetadataPda,
+  MPL_TOKEN_METADATA_PROGRAM_ID,
   mplTokenMetadata,
 } from "@metaplex-foundation/mpl-token-metadata";
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
@@ -17,7 +18,10 @@ import {
   TOKEN_PROGRAM_ID,
   ASSOCIATED_TOKEN_PROGRAM_ID,
   getAssociatedTokenAddress,
+  getOrCreateAssociatedTokenAccount,
+  getAssociatedTokenAddressSync,
 } from "@solana/spl-token";
+import { seed } from "@coral-xyz/anchor/dist/cjs/idl";
 
 describe("nft-ticket", async () => {
   // Configure the client to use the local cluster.
@@ -29,9 +33,15 @@ describe("nft-ticket", async () => {
   const program = anchor.workspace.NftTicket as Program<NftTicket>;
   // create event account
   const eventAccount = anchor.web3.Keypair.generate();
+  // create ticket mint account
+  const mint = web3.Keypair.generate();
+  // create vault account
+  const vault = web3.Keypair.generate();
+  // create taker account
+  const taker = anchor.web3.Keypair.generate();
 
-  //  ticket price in lamports is set to 1000
-  const ticketPrice = 20000;
+  //   ticket price in lamports is set to 1000
+  const ticketPrice = new anchor.BN(0.5 * LAMPORTS_PER_SOL); // 1_000_000_000;
 
   const connection = program.provider.connection;
 
@@ -74,6 +84,16 @@ describe("nft-ticket", async () => {
     [Buffer.from("ticket"), eventPda.toBuffer()],
     program.programId
   );
+  const [newPda, newBump] = PublicKey.findProgramAddressSync(
+    [Buffer.from("authority"), Buffer.from(eventName)],
+    program.programId
+  );
+
+  const vault_ata = await getAssociatedTokenAddress(
+    mint.publicKey,
+    vault.publicKey
+  );
+
   it("create event", async () => {
     console.log(`\n ---------------------------------------\n
                       \n ✅ Create event
@@ -95,7 +115,15 @@ describe("nft-ticket", async () => {
     console.log("Ticket PDA:", ticketPda.toBase58());
 
     const tx = await program.methods
-      .createEvent(eventName, ticketPrice, date, maxSupply, description)
+      .createEvent(
+        eventName,
+        ticketPrice,
+        date,
+        maxSupply,
+        description,
+        "Testing",
+        "https://arweave.net/KuAU7QFkCz20dpyS6umjKHWZGYDKXfrxd76LKd80jW"
+      )
       .accounts({
         organizer: organizerWallet.publicKey,
       })
@@ -130,14 +158,13 @@ describe("nft-ticket", async () => {
       .use(walletAdapterIdentity(organizerWallet));
 
     // generate the wallet for the mint NFT
-    const mint = web3.Keypair.generate();
 
     // Derive the token address account associated with the mint.
     const mint_ata = await getAssociatedTokenAddress(
       mint.publicKey,
       organizerWallet.publicKey
     );
-    console.log("Associated token account: ", mint_ata.toBase58());
+    console.log("Mint Associated token account: ", mint_ata.toBase58());
 
     // Derive the PDA metadata count.
     const [metadataAccount] = findMetadataPda(umi, {
@@ -148,15 +175,6 @@ describe("nft-ticket", async () => {
     let masterEditionAccount = findMasterEditionPda(umi, {
       mint: publicKey(mint.publicKey),
     })[0];
-    const uri =
-      "https://arweave.net/KuAU7QFkCz20dpyS6umjKHWZGYDKXfrxd76LKd80jWA";
-
-    // Define metadata information for the NFT.
-    const metadata = {
-      name: "AlyraSOL",
-      symbol: "ASOL",
-      uri,
-    };
 
     // Check that the ticket exists and does not already have an NFT
     const ticketAccountForNft = web3.Keypair.generate();
@@ -179,11 +197,6 @@ describe("nft-ticket", async () => {
       "The ticket should not have an NFT before creation"
     );
 
-    const vault = web3.Keypair.generate();
-    const vault_ata = await getAssociatedTokenAddress(
-      mint.publicKey,
-      vault.publicKey
-    );
     console.log("Vault ata: ", vault_ata.toBase58());
 
     // Ensure the vault ATA is created
@@ -197,11 +210,17 @@ describe("nft-ticket", async () => {
       await program.provider.connection.getAccountInfo(vault_ata);
     assert.isNull(vaultAtaDataBeforeMintingNFT);
 
-    const TOKEN_METADATA_ONCHAIN_ID =
-      "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s";
+    const uri =
+      "https://arweave.net/KuAU7QFkCz20dpyS6umjKHWZGYDKXfrxd76LKd80jWA";
 
+    // Define metadata information for the NFT.
+    const metadata = {
+      name: "AlyraSOL",
+      symbol: "ASOL",
+      uri,
+    };
     const txid = await program.methods
-      .createNft(metadata.name, metadata.symbol, metadata.uri)
+      .createNft()
       .accountsStrict({
         signer: organizerWallet.publicKey,
         vault: vault.publicKey,
@@ -210,7 +229,7 @@ describe("nft-ticket", async () => {
         event: eventPda,
         metadataAccount: metadataAccount,
         masterEditionAccount: masterEditionAccount,
-        tokenMetadataProgram: TOKEN_METADATA_ONCHAIN_ID,
+        tokenMetadataProgram: MPL_TOKEN_METADATA_PROGRAM_ID,
         tokenProgram: TOKEN_PROGRAM_ID,
         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
         systemProgram: web3.SystemProgram.programId,
@@ -232,8 +251,293 @@ describe("nft-ticket", async () => {
     const nftMetadata = await program.provider.connection.getAccountInfo(
       new web3.PublicKey(metadataAccount.toString())
     );
-    console.log("NFT metadata: utf-8 ", nftMetadata.data.toString("utf-8"));
+    console.log("NFT metadata: utf-8 ", nftMetadata);
   });
+
+  it("should purchase ticket ", async () => {
+    console.log(`\n ---------------------------------------\n
+                      \n ✅ Purchase ticket
+                  \n ---------------------------------------\n`);
+
+    // Airdrop SOL to taker to cover transaction fees
+    await airdropSol(taker.publicKey);
+    console.log(
+      "✅ Taker balance before:",
+      await provider.connection.getBalance(taker.publicKey)
+    );
+
+    const vault_ata = await getAssociatedTokenAddress(
+      mint.publicKey,
+      vault.publicKey
+    );
+
+    // create or get the taker ATA
+    const takerAta = await getOrCreateAssociatedTokenAccount(
+      connection,
+      taker,
+      mint.publicKey,
+      taker.publicKey
+    );
+
+    console.log(`\n ✅ Taker ATA: ${takerAta}`);
+
+    // get the purchase pda
+    const [purchasePda, purchaseBump] = PublicKey.findProgramAddressSync(
+      [Buffer.from("ticket"), Buffer.from(eventName)],
+      program.programId
+    );
+    const vaultAssociatedTokenAaddress = await getAssociatedTokenAddress(
+      vault_ata,
+      purchasePda,
+      true
+    );
+    const takerAssociatedTokenAaddress = await getAssociatedTokenAddress(
+      takerAta.address,
+      ticketPda,
+      true
+    );
+
+    const getVaultAtaInfo = await program.provider.connection.getAccountInfo(
+      vault_ata
+    );
+
+    console.log(`\n ✅ 3333 Vault ATA info: ${getVaultAtaInfo}`);
+    console.log("event pda data: ", eventPda);
+    console.log(`\n ✅ Vault Purchase ATA: ${vaultAssociatedTokenAaddress}`);
+    console.log(`\n ✅ Purchase PDA: ${purchasePda.toBase58()}`);
+    const tx = await program.methods
+      .purchaseTicket(eventName)
+      .accountsStrict({
+        taker: taker.publicKey,
+        organizer: organizerWallet.publicKey,
+        vault: vault_ata,
+        takerAta: takerAssociatedTokenAaddress,
+        vaultAta: vaultAssociatedTokenAaddress,
+        event: eventPda,
+        ticket: ticketPda,
+        systemProgram: web3.SystemProgram.programId,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .signers([taker])
+      .rpc();
+    console.log("✅ Transaction successful: ", tx);
+    //  get taker balance after purchase
+    const takerBalanceAfter = await provider.connection.getBalance(
+      taker.publicKey
+    );
+    console.log(
+      `✅ Taker balance after purchase: ${
+        takerBalanceAfter / LAMPORTS_PER_SOL
+      } SOL`
+    );
+  });
+
+  // it("Testing purchase ticket ", async () => {
+  //   console.log(`\n ---------------------------------------\n
+  //                     \n ✅ Testing Purchase ticket
+  //                 \n ---------------------------------------\n`);
+
+  //   // Airdrop SOL to taker to cover transaction fees
+  //   await airdropSol(taker.publicKey);
+  //   // create or get the taker ATA
+  //   const takerAta = await getOrCreateAssociatedTokenAccount(
+  //     connection,
+  //     taker,
+  //     mint.publicKey,
+  //     taker.publicKey
+  //   );
+  //   console.log(`\n ✅ Taker ATA: ${takerAta}`);
+
+  //   const vault_ata = await getOrCreateAssociatedTokenAccount(
+  //     connection,
+  //     vault,
+  //     mint.publicKey,
+  //     vault.publicKey
+  //   );
+  //   await airdropSol(vault.publicKey);
+
+  //   // get the purchase pda
+  //   const purchasePda = PublicKey.findProgramAddressSync(
+  //     [Buffer.from("vault"), Buffer.from(eventName)],
+  //     program.programId
+  //   );
+  //   const vaultAssociatedTokenAaddress = await getAssociatedTokenAddress(
+  //     vault_ata.address,
+  //     purchasePda[0],
+  //     true
+  //   );
+
+  //   const vaultPda = PublicKey.findProgramAddressSync(
+  //     [Buffer.from("vault"), Buffer.from(eventName)],
+  //     program.programId
+  //   );
+  //   const vaultSeed = getAssociatedTokenAddressSync(
+  //     vault.publicKey,
+  //     vaultPda[0],
+  //     true
+  //   );
+  //   const getBfeoreVaultAtaInfo = await program.account.event.fetch(eventPda);
+  //   console.log(`\n ✅ 1111 Vault ATA info: ${getBfeoreVaultAtaInfo}`);
+
+  //   console.log(`\n ✅ Vault Seed ATA: ${vaultSeed}`);
+  //   const getVaultAtaInfo = await program.provider.connection
+  //     .getAccountInfo(vault_ata.address)
+  //     .then((data) => {
+  //       console.log("Vault ata info: ", data);
+  //     });
+  //   console.log(`\n ✅ 3333 Vault ATA info: ${getVaultAtaInfo}`);
+
+  //   console.log(`\n ✅ Vault Purchase ATA: ${vaultAssociatedTokenAaddress}`);
+  //   console.log(`\n ✅ Purchase PDA: ${purchasePda[0].toBase58()}`);
+
+  //   const accounts = {
+  //     taker: taker.publicKey,
+  //     organizer: organizerWallet.publicKey,
+  //     takerAta: takerAta.address,
+  //     vault: purchasePda[0],
+  //     vaultAta: vaultAssociatedTokenAaddress,
+  //     event: eventPda,
+  //     ticket: ticketPda,
+  //     seed: vaultSeed,
+  //     systemProgram: web3.SystemProgram.programId,
+  //     tokenProgram: TOKEN_PROGRAM_ID,
+  //   };
+  //   const tx = await program.methods
+  //     .createTicket(eventName)
+  //     .accounts(
+  //       //   {
+  //       //   taker: taker.publicKey,
+  //       //   organizer: organizerWallet.publicKey,
+  //       //   takerAta: takerAta.address,
+  //       //   vault: vault.publicKey,
+  //       //   vaultAta: vaultSeed,
+  //       //   event: eventPda,
+  //       //   ticket: ticketPda,
+  //       //   systemProgram: web3.SystemProgram.programId,
+  //       //   tokenProgram: TOKEN_PROGRAM_ID,
+  //       //   tokenMetadataProgram: MPL_TOKEN_METADATA_PROGRAM_ID,
+  //       // }
+  //       accounts
+  //     )
+  //     .signers([taker, organizerWallet])
+  //     .rpc();
+  //   console.log("✅ Transaction successful: ", tx);
+  // });
+
+  // it("Testing purchase by sending solana ticket ", async () => {
+  //   console.log(`\n ---------------------------------------\n
+  //                     \n ✅ Testing purchase by sending solana ticket
+  //                 \n ---------------------------------------\n`);
+
+  //   // Airdrop SOL to taker to cover transaction fees
+
+  //   const mint = web3.Keypair.generate();
+  //   await airdropSol(taker.publicKey);
+  //   // create or get the taker ATA
+  //   const takerAta = await getAssociatedTokenAddressSync(
+  //     // connection,
+  //     // taker,
+  //     mint.publicKey,
+  //     taker.publicKey
+  //   );
+  //   const RPC_ENDPOINT = "http://127.0.0.1:8899";
+
+  //   const umi = createUmi(RPC_ENDPOINT)
+  //     .use(mplTokenMetadata())
+  //     .use(walletAdapterIdentity(organizerWallet));
+
+  //   // generate the wallet for the mint NFT
+
+  //   // Derive the token address account associated with the mint.
+  //   const mint_ata = await getAssociatedTokenAddressSync(
+  //     mint.publicKey,
+  //     taker.publicKey
+  //   );
+
+  //   console.log("Mint Associated token account: ", mint_ata.toBase58());
+
+  //   // Derive the PDA metadata count.
+  //   const [metadataAccount] = findMetadataPda(umi, {
+  //     mint: publicKey(mint.publicKey),
+  //   });
+
+  //   // Derive the main PDA edition.
+  //   let masterEditionAccount = findMasterEditionPda(umi, {
+  //     mint: publicKey(mint.publicKey),
+  //   })[0];
+
+  //   // Check that the ticket exists and does not already have an NFT
+  //   const ticketAccountForNft = web3.Keypair.generate();
+
+  //   const ticketAccountInfo = await provider.connection.getAccountInfo(
+  //     ticketAccountForNft.publicKey
+  //   );
+  //   console.log("Ticket account info: ", ticketAccountInfo);
+
+  //   const ticketAccountDataAFter = await program.account.ticket.fetch(
+  //     ticketPda
+  //   );
+
+  //   console.log("Ticket account data before: ", ticketAccountDataAFter.nftMint);
+  //   // assert.isNull(
+  //   //   ticketAccountDataBefore.nftMint,
+  //   //   "The ticket should not have an NFT before creation"
+  //   // );
+
+  //   console.log("Vault ata: ", vault_ata.toBase58());
+
+  //   // Ensure the vault ATA is created
+  //   await program.provider.connection.confirmTransaction(
+  //     await program.provider.connection.requestAirdrop(
+  //       vault.publicKey,
+  //       LAMPORTS_PER_SOL
+  //     )
+  //   );
+
+  //   const newPdaSeed = getAssociatedTokenAddressSync(
+  //     vault.publicKey,
+  //     ticketPda,
+  //     true
+  //   );
+  //   const vaultAtaDataBeforeMintingNFT =
+  //     await program.provider.connection.getAccountInfo(vault_ata);
+  //   // assert.isNull(vaultAtaDataBeforeMintingNFT);
+
+  //   const eventData = await program.account.ticket.fetch(ticketPda);
+  //   console.log("\n Event data context:", eventData);
+  //   const txid = await program.methods
+  //     .mintNftToUser(eventName)
+  //     .accountsStrict({
+  //       organizer: organizerWallet.publicKey,
+  //       takerAta: takerAta,
+  //       taker: taker.publicKey,
+  //       vault: vault.publicKey,
+  //       // vaultAta: vault_ata,
+  //       mint: mint.publicKey,
+  //       event: eventPda,
+  //       metadataAccount: metadataAccount,
+  //       masterEditionAccount: masterEditionAccount,
+  //       tokenMetadataProgram: MPL_TOKEN_METADATA_PROGRAM_ID,
+  //       tokenProgram: TOKEN_PROGRAM_ID,
+  //       associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+  //       systemProgram: web3.SystemProgram.programId,
+  //       rent: web3.SYSVAR_RENT_PUBKEY,
+  //       ticket: ticketPda,
+  //     })
+  //     .signers([taker, organizerWallet, vault])
+  //     .rpc();
+
+  //   console.log(
+  //     "✅ Transaction successful: ",
+  //     await provider.connection.getSignatureStatus(txid)
+  //   );
+
+  //   // Verify the NFT exists by fetching its metadata
+  //   const nftMetadata = await program.provider.connection.getAccountInfo(
+  //     new web3.PublicKey(metadataAccount.toString())
+  //   );
+  //   console.log("NFT metadata: utf-8 ", nftMetadata);
+  // });
 });
 function airdropSol(publicKey: anchor.web3.PublicKey) {
   throw new Error("Function not implemented.");

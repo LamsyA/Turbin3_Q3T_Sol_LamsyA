@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 #[account]
 pub struct Ticket {
     pub event: String,
-    pub price: u16,
+    pub price: u64,
     pub purchased_date: i64,
     pub taker: Pubkey,
     pub nft_mint: Option<Pubkey>,

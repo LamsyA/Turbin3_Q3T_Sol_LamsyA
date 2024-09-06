@@ -1,20 +1,19 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{
-    associated_token::{get_associated_token_address, AssociatedToken},
+    associated_token::AssociatedToken,
     metadata::{
-        create_master_edition_v3, create_metadata_accounts_v3,
-        mint_new_edition_from_master_edition_via_token, CreateMasterEditionV3,
-        CreateMetadataAccountsV3, Metadata, MintNewEditionFromMasterEditionViaToken,
+        create_master_edition_v3, create_metadata_accounts_v3, CreateMasterEditionV3,
+        CreateMetadataAccountsV3, Metadata,
     },
-    token::{mint_to, transfer, Mint, MintTo, Token, TokenAccount, Transfer},
+    token::{mint_to, Mint, MintTo, Token, TokenAccount},
 };
 use mpl_token_metadata::{
     accounts::{MasterEdition, Metadata as MetadataAccount},
-    types::{Collection, Creator, DataV2},
+    types::{Creator, DataV2},
 };
 
 use crate::state::Ticket;
-use crate::{error::CustomError, Event};
+use crate::Event;
 
 #[derive(Accounts)]
 pub struct CreateNft<'info> {
@@ -38,13 +37,6 @@ pub struct CreateNft<'info> {
     )]
     pub vault_ata: Box<Account<'info, TokenAccount>>,
 
-    // #[account(
-    //     init_if_needed,
-    //     payer = signer,
-    //     associated_token::mint = mint,
-    //     associated_token::authority = signer
-    // )]
-    // pub mint_ata: Box<Account<'info, TokenAccount>>,
     #[account(mut)]
     pub vault: Signer<'info>,
 
@@ -70,6 +62,7 @@ pub struct CreateNft<'info> {
     pub ticket: Box<Account<'info, Ticket>>,
 
     pub token_program: Program<'info, Token>,
+
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub token_metadata_program: Program<'info, Metadata>,
     pub system_program: Program<'info, System>,
@@ -94,9 +87,9 @@ impl<'info> CreateNft<'info> {
     }
     pub fn create_nft(
         &mut self,
-        name: String,
-        symbol: String,
-        uri: String,
+        // name: String,
+        // symbol: String,
+        // uri: String,
         // price: u16, // Specify the ticket price here
     ) -> Result<()> {
         msg!("Creating Metadata Account...");
@@ -116,9 +109,9 @@ impl<'info> CreateNft<'info> {
         );
         msg!("Creating Master Edition Account...");
         let data_v2 = DataV2 {
-            name,
-            symbol,
-            uri,
+            name: self.event.event_name.clone(),
+            symbol: self.event.symbol.clone(),
+            uri: self.event.uri.clone(),
             seller_fee_basis_points: 0,
             creators: Some(vec![Creator {
                 address: self.signer.key(),
@@ -126,6 +119,10 @@ impl<'info> CreateNft<'info> {
                 share: 100,
             }]),
             collection: None,
+            // Some(Collection {
+            //     key: self.event.key(),
+            //     verified: false,
+            // }),
             uses: None,
         };
         msg!(" V3 Creating Master Edition Account...");

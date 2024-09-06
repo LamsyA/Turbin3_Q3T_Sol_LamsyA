@@ -20,7 +20,7 @@ test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
 
 
 [test]
-startup_wait = 7000
+startup_wait = 70000
 shutdown_wait = 4000
 
 [test.validator]

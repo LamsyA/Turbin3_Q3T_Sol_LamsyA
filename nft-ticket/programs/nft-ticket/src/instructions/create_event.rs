@@ -34,10 +34,12 @@ impl<'info> CreateEvent<'info> {
     pub fn create_event(
         &mut self,
         event_name: String,
-        ticket_price: u16,
+        ticket_price: u64,
         date: i64,
         max_supply: u16,
         description: String,
+        symbol: String,
+        uri: String,
         bumps: &CreateEventBumps,
     ) -> Result<()> {
         require!(max_supply > 0, CustomError::InvalidMaxSupply);
@@ -54,6 +56,8 @@ impl<'info> CreateEvent<'info> {
             date,
             event_name,
             description,
+            symbol,
+            uri,
         });
 
         self.ticket.event = self.event.event_name.clone();
