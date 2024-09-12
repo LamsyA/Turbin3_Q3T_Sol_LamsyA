@@ -20,6 +20,7 @@ use crate::{error::CustomError, state::{event, Ticket}};
 pub struct CreateTicket<'info> {
     #[account(mut)]
     pub taker: Signer<'info>,
+    #[account(mut)]
     pub organizer: Signer<'info>,
     
 
@@ -116,7 +117,7 @@ impl <'info> CreateTicket<'info> {
             },
         ];
 
-        let metadata_account = CreateMetadataAccountV3Cpi::new(
+ CreateMetadataAccountV3Cpi::new(
             &self.token_metadata_program.to_account_info(),
             CreateMetadataAccountV3CpiAccounts {
                 metadata: &self.token_metadata_program.to_account_info(),

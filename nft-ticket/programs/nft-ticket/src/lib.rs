@@ -7,7 +7,8 @@ pub mod instructions;
 pub use instructions::*;
 
 pub mod state;
-pub use state::*;
+
+pub use state::*; // Explicit import to resolve ambiguity
 
 #[program]
 pub mod nft_ticket {
@@ -35,25 +36,25 @@ pub mod nft_ticket {
             &ctx.bumps,
         )
     }
-    pub fn create_nft(
-        ctx: Context<CreateNft>,
-        // name: String,
-        // symbol: String,
-        // uri: String,
-    ) -> Result<()> {
+    pub fn create_collection(ctx: Context<CreateCollection>) -> Result<()> {
         ctx.accounts.mint_nft()?;
-        ctx.accounts.create_nft()
+        ctx.accounts.create_collection()
     }
 
     pub fn purchase_ticket(ctx: Context<Purchase>, event_name: String) -> Result<()> {
-        // ctx.accounts.purchase_ticket(event_name, &ctx.bumps)
-        ctx.accounts.send_sol(event_name)
+        ctx.accounts.send_sol(event_name.clone())?;
+        ctx.accounts.mint_new_ticket(event_name)
     }
-    // pub fn create_ticket(ctx: Context<CreateTicket>, event_name: String) -> Result<()> {
-    //     ctx.accounts.send_sol(event_name.clone())?;
-    //     ctx.accounts.create_ticket(event_name, &ctx.bumps)
-    // }
+    pub fn create_ticket(ctx: Context<CreateTicket>, event_name: String) -> Result<()> {
+        ctx.accounts.send_sol(event_name.clone())
+    }
+
     pub fn mint_nft_to_user(ctx: Context<MintNftToUser>, event_name: String) -> Result<()> {
         ctx.accounts.send_sol(event_name)
+    }
+
+    pub fn create_nft_for_collection(ctx: Context<CreateNft>, event_name: String) -> Result<()> {
+        ctx.accounts.send_sol(event_name.clone())?;
+        ctx.accounts.mint_ticket_as_nft(event_name)
     }
 }

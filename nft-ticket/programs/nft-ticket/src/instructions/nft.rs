@@ -9,14 +9,14 @@ use anchor_spl::{
 };
 use mpl_token_metadata::{
     accounts::{MasterEdition, Metadata as MetadataAccount},
-    types::{Creator, DataV2},
+    types::{CollectionDetails, Creator, DataV2},
 };
 
 use crate::state::Ticket;
 use crate::Event;
 
 #[derive(Accounts)]
-pub struct CreateNft<'info> {
+pub struct CreateCollection<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
 
@@ -69,7 +69,7 @@ pub struct CreateNft<'info> {
     pub rent: Sysvar<'info, Rent>,
 }
 
-impl<'info> CreateNft<'info> {
+impl<'info> CreateCollection<'info> {
     pub fn mint_nft(&mut self) -> Result<()> {
         msg!("Creating Mint Account...");
         let account = MintTo {
@@ -85,7 +85,7 @@ impl<'info> CreateNft<'info> {
 
         Ok(())
     }
-    pub fn create_nft(
+    pub fn create_collection(
         &mut self,
         // name: String,
         // symbol: String,
@@ -94,7 +94,6 @@ impl<'info> CreateNft<'info> {
     ) -> Result<()> {
         msg!("Creating Metadata Account...");
         let supply = self.event.max_supply.into();
-
         let cpi_context = CpiContext::new(
             self.token_metadata_program.to_account_info(),
             CreateMetadataAccountsV3 {
@@ -119,14 +118,18 @@ impl<'info> CreateNft<'info> {
                 share: 100,
             }]),
             collection: None,
-            // Some(Collection {
-            //     key: self.event.key(),
-            //     verified: false,
-            // }),
             uses: None,
         };
         msg!(" V3 Creating Master Edition Account...");
-        create_metadata_accounts_v3(cpi_context, data_v2, false, true, None)?;
+        create_metadata_accounts_v3(
+            cpi_context,
+            data_v2,
+            false,
+            true,
+            Some(CollectionDetails::V1 {
+                size: self.ticket.max_supply.into(),
+            }),
+        )?;
 
         let cpi_context = CpiContext::new(
             self.token_metadata_program.to_account_info(),
@@ -144,7 +147,7 @@ impl<'info> CreateNft<'info> {
         );
         msg!("V3 Creating Master Edition Account... loading supply...");
         create_master_edition_v3(cpi_context, Some(supply))?;
-        self.ticket.nft_mint = Some(self.mint.key());
+        // self.ticket.nft_mint = Some(self.mint.key());
         self.ticket.price = self.event.ticket_price; // Store the event price in the ticket account
         self.ticket.max_supply = self.event.max_supply;
         // self.ticket.event = self.event.event_name.clone();
