@@ -10,8 +10,6 @@
 
 # Content
 
-[Week 0](./cli_tool)
-
 - [Rust tool](./cli_tool/Turbin3_Prereq_rust/)
 - [Typescript tool](./cli_tool/Turbin3_Prereq_typescript/)
 
@@ -23,19 +21,16 @@ This project is both typescript and Rust-based CLI tool and test suite designed 
 - Transferring SOL
 - Enrolling in a Solana program
 
-[Week 1](./spl_token_and%20_nft/)
-
 - SPL Token
   - [token initailisation](./spl_token_and%20_nft/cluster1/spl_init.ts)
   - [token Metadata](./spl_token_and%20_nft/cluster1/spl_metadata.ts)
   - [token Miniting](./spl_token_and%20_nft/cluster1/spl_mint.ts)
   - [token Transfer](./spl_token_and%20_nft/cluster1/spl_mint.ts)
 - NFT
+
   - [token image creation and uploading](./spl_token_and%20_nft/cluster1/nft_image.ts)
   - [token Metadata](./spl_token_and%20_nft/cluster1/nft_metadata.ts)
   - [token Miniting](./spl_token_and%20_nft/cluster1/nft_mint.ts)
-
-[Week 2](./vault-program/)
 
 - Vault Program
 
@@ -63,5 +58,3 @@ This project is both typescript and Rust-based CLI tool and test suite designed 
   - [Escrow Maker](./escrow/programs/escrow/src/contexts/make.rs)
   - [Escrow Taker](./escrow/programs/escrow/src/contexts/take.rs)
   - [Escrow Redund](./escrow/programs/escrow/src/contexts/refund.rs)
-
-- [week 3](./#/)
