@@ -41,7 +41,10 @@ pub mod nft_ticket {
         ctx.accounts.create_collection()
     }
 
-    pub fn create_nft_for_collection(ctx: Context<CreateNft>, event_name: String) -> Result<()> {
+    pub fn purchase_and_create_collection(
+        ctx: Context<CreateNft>,
+        event_name: String,
+    ) -> Result<()> {
         ctx.accounts.send_sol(event_name.clone())?;
         ctx.accounts.mint_ticket_as_nft(event_name)
     }

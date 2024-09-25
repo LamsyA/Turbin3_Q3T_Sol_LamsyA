@@ -320,7 +320,7 @@ describe("nft-ticket", async () => {
     );
 
     const txid = await program.methods
-      .createNftForCollection(eventName)
+      .purchaseAndCreateCollection(eventName)
       .accountsStrict({
         taker: taker.publicKey,
         mintAuthority: vault.publicKey,
